@@ -1,64 +1,27 @@
 
-name: Build Juwai Android APK
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+}
 
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
+android {
+    namespace = "com.juwai.morningteer"
+    compileSdk = 35
 
-permissions:
-  contents: read
+    defaultConfig {
+        applicationId = "com.juwai.morningteer"
+        minSdk = 23
+        targetSdk = 35
+        versionCode = 1
+        versionName = "1.0.0"
+    }
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Find and extract Android project ZIP
-        shell: bash
-        run: |
-          ZIP_FILE=$(find . -maxdepth 3 -type f -iname '*.zip' -print -quit)
-          if [ -z "$ZIP_FILE" ]; then
-            echo "Android project ZIP not found"
-            exit 1
-          fi
-          mkdir -p "$RUNNER_TEMP/android-project"
-          unzip -q "$ZIP_FILE" -d "$RUNNER_TEMP/android-project"
-          PROJECT_DIR=$(dirname "$(find "$RUNNER_TEMP/android-project" -name settings.gradle.kts -print -quit)")
-          if [ -z "$PROJECT_DIR" ] || [ ! -f "$PROJECT_DIR/app/build.gradle.kts" ]; then
-            echo "Android project files not found"
-            exit 1
-          fi
-          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v4
-        with:
-          cmdline-tools-version: '15859902'
-          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
-          accept-android-sdk-licenses: true
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
-
-      - name: Build APK
-        run: gradle -p "$PROJECT_DIR" --no-daemon assembleDebug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Juwai-Morning-Teer-APK
-          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
